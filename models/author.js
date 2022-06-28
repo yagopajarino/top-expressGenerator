@@ -23,15 +23,14 @@ AuthorSchema.virtual("name").get(function () {
   return fullname;
 });
 
-// Virtual for author's lifespan
 AuthorSchema.virtual("lifespan").get(function () {
   var lifetime_string = "";
   if (this.date_of_birth) {
-    lifetime_string = this.date_of_birth.getYear().toString();
+    lifetime_string = this.date_of_birth.getFullYear().toString();
   }
-  lifetime_string += " - ";
   if (this.date_of_death) {
-    lifetime_string += this.date_of_death.getYear();
+    lifetime_string += " - ";
+    lifetime_string += this.date_of_death.getFullYear().toString();
   }
   return lifetime_string;
 });
@@ -39,6 +38,10 @@ AuthorSchema.virtual("lifespan").get(function () {
 // Virtual for author's URL
 AuthorSchema.virtual("url").get(function () {
   return "/catalog/author/" + this._id;
+});
+
+AuthorSchema.virtual("date_of_birth_formatted").get(function () {
+  return this.getYear();
 });
 
 //Export model
