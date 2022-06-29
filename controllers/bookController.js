@@ -156,7 +156,7 @@ exports.book_create_post = [
             return next(err);
           }
           for (let i = 0; i < result.genres.length; i++) {
-            if (book.genre.indexOf(result.genre[i]._id) > -1) {
+            if (book.genre.indexOf(result.genres[i]._id) > -1) {
               result.genres[i].checked = "true";
             }
           }
@@ -190,9 +190,124 @@ exports.book_delete_post = function (req, res) {
 };
 
 exports.book_update_get = function (req, res) {
-  res.send("NOT IMPLEMENTED: Book update GET");
+  async.parallel(
+    {
+      book: function (callback) {
+        Book.findById(req.params.id)
+          .populate("author")
+          .populate("genre")
+          .exec(callback);
+      },
+      authors: function (callback) {
+        Author.find().exec(callback);
+      },
+      genres: function (callback) {
+        Genre.find().exec(callback);
+      },
+    },
+    function (err, results) {
+      if (err) {
+        return next(err);
+      }
+      if (results.book == null) {
+        let err = new Error("No books");
+        res.status = 404;
+        return next(err);
+      }
+      for (let i = 0; i < results.genres.length; i++) {
+        for (let j = 0; j < results.book.genre.length; j++) {
+          if (
+            results.genres[i]._id.toString() ==
+            results.book.genre[j]._id.toString()
+          ) {
+            results.genres[i].checked = "true";
+          }
+        }
+      }
+      console.log(results.book.summary);
+      res.render("book_form", {
+        title: "Update Book",
+        authors: results.authors,
+        genres: results.genres,
+        book: results.book,
+      });
+    }
+  );
 };
 
-exports.book_update_post = function (req, res) {
-  res.send("NOT IMPLEMENTED: Book update POST");
-};
+exports.book_update_post = [
+  function (req, res, next) {
+    if (!(req.body.genre instanceof Array)) {
+      if (typeof req.body.genre == "undefined") {
+        req.body.genre = [];
+      } else {
+        req.body.genre = new Array(req.body.genre);
+      }
+    }
+    next();
+  },
+
+  body("title", "Title must not be empty").trim().isLength({ min: 1 }).escape(),
+  body("author", "Author must not be empty")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("summary", "Summary must not be empty")
+    .trim()
+    .isLength({ min: 1 })
+    .escape(),
+  body("isbn", "ISBN must not be empty").trim().isLength({ min: 1 }).escape(),
+  body("genre.*").escape(),
+
+  function (req, res, next) {
+    const errors = validationResult(req);
+
+    let book = new Book({
+      title: req.body.title,
+      author: req.body.author,
+      summary: req.body.summary,
+      isbn: req.body.isbn,
+      genre: req.body.genre,
+      _id: req.params.id,
+    });
+    if (!errors.isEmpty()) {
+      console.log("there are errors");
+      console.log(errors.array());
+      async.parallel(
+        {
+          authors: function (callback) {
+            Author.find(callback);
+          },
+          genres: function (callback) {
+            Genre.find(callback);
+          },
+        },
+        function (err, result) {
+          if (err) {
+            return next(err);
+          }
+          for (let i = 0; i < result.genres.length; i++) {
+            if (book.genre.indexOf(result.genre[i]._id) > -1) {
+              result.genres[i].checked = "true";
+            }
+          }
+          res.render("book_form", {
+            title: "Create Book",
+            authors: result.authors,
+            genres: result.genres,
+            book: book,
+            errors: errors.array(),
+          });
+        }
+      );
+      return;
+    } else {
+      Book.findByIdAndUpdate(req.params.id, book, {}, function (err) {
+        if (err) {
+          return next(err);
+        }
+        res.redirect(book.url);
+      });
+    }
+  },
+];
