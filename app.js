@@ -10,9 +10,12 @@ let indexRouter = require("./routes/index");
 let usersRouter = require("./routes/users");
 let catalogRouter = require("./routes/catalog");
 
+let compression = require("compression");
+let helmet = require("helmet");
+
 let app = express();
 let mongoose = require("mongoose");
-let mongoDB = process.env.mongourl;
+let mongoDB = process.env.MONGODB_URI;
 mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
 let db = mongoose.connection;
 db.on("error", console.error.bind(console, "MongoDB connection error"));
@@ -25,6 +28,8 @@ app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(compression());
+app.use(helmet());
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
