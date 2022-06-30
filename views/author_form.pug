@@ -11,7 +11,7 @@ block content
             input#family_name.form-control(type="text" placeholder="Eriksen" name="family_name" value=(undefined===author ? "" : author.family_name))
         .form-group 
             label(for="date_of_birth") Birth: 
-            input#date_of_birth.form-control(type="date" name="date_of_birth" placeholder="yyyy-mm-dd" value=(undefined===author ? "" : author.date_of_birth))
+            input#date_of_birth.form-control(type="date" name="date_of_birth" value=(undefined===author ? "" : author.date_of_birth))
             label(for="date_of_death") Death: 
             input#date_of_death.form-control(type="date" name="date_of_death" placeholder="yyyy-mm-dd" value=(undefined===author ? "" : author.date_of_death))
         button.btn.btn-primary(type="submit") Submit
